@@ -38,7 +38,7 @@ function saveFrontendFiles(token) {
   }
 
   fs.writeFileSync(
-    contractsDir + "/contract-address.json",
+    contractsDir + "/contract-Token-address.json",
     JSON.stringify({ Token: token.address }, undefined, 2)
   );
 

@@ -77,4 +77,14 @@ contract Renter {
     function getImageUrl() external view returns (string memory) {
         return imageUrl;
     }  
+
+    /**
+     * Read only function to retrieve the token balance of a given account.
+     *
+     * The `view` modifier indicates that it doesn't modify the contract's
+     * state, which allows us to call it without executing a transaction.
+     */
+    function setImageUrl(string calldata newImageUrl) external {
+        imageUrl = newImageUrl;
+    }  
 }

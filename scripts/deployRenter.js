@@ -38,7 +38,7 @@ function saveFrontendFiles(renter) {
   }
 
   fs.writeFileSync(
-    contractsDir + "/contract-address.json",
+    contractsDir + "/contract-Renter-address.json",
     JSON.stringify({ Renter: renter.address }, undefined, 2)
   );
 
