@@ -8,6 +8,9 @@ import { ethers } from "ethers";
 import TokenArtifact from "../contracts/Token.json";
 import contractAddress from "../contracts/contract-address.json";
 
+import RenterArtifact from "../contracts/Renter.json";
+import contractRenterAddress from "../contracts/contract-address.json";
+
 // All the logic of this dapp is contained in the Dapp component.
 // These other components are just presentational ones: they don't have any
 // logic. They just render HTML.
@@ -18,6 +21,8 @@ import { Transfer } from "./Transfer";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { NoTokensMessage } from "./NoTokensMessage";
+
+import { DisplayImage } from "./DisplayImage";
 
 // This is the Hardhat Network id, you might change it in the hardhat.config.js
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
@@ -53,17 +58,35 @@ export class Dapp extends React.Component {
       txBeingSent: undefined,
       transactionError: undefined,
       networkError: undefined,
+
+      // tga modifs
+      defaultImageUrl: 'https://picsum.photos/id/77/720/300',
+      renterData: {
+        imageUrl: 'https://picsum.photos/id/76/720/300'
+      }
     };
 
     this.state = this.initialState;
   }
 
   render() {
+
     // Ethereum wallets inject the window.ethereum object. If it hasn't been
     // injected, we instruct the user to install MetaMask.
-    if (window.ethereum === undefined) {
-      return <NoWalletDetected />;
+    if (true) {
+      console.log('this.state.defaultImage')
+      this._initializeTGA()
+        return(
+          <DisplayImage
+            url={this.state.renterData.imageUrl} />
+        )
     }
+
+    // Ethereum wallets inject the window.ethereum object. If it hasn't been
+    // injected, we instruct the user to install MetaMask.
+    /*     if (window.ethereum === undefined) {
+          return <NoWalletDetected />;
+        } */
 
     // The next thing we need to do, is to ask the user to connect their wallet.
     // When the wallet gets connected, we are going to save the users's address
@@ -72,93 +95,24 @@ export class Dapp extends React.Component {
     //
     // Note that we pass it a callback that is going to be called when the user
     // clicks a button. This callback just calls the _connectWallet method.
-    if (!this.state.selectedAddress) {
-      return (
-        <ConnectWallet 
-          connectWallet={() => this._connectWallet()} 
-          networkError={this.state.networkError}
-          dismiss={() => this._dismissNetworkError()}
-        />
-      );
-    }
+    /*     if (!this.state.selectedAddress) {
+          return (
+            <ConnectWallet 
+              connectWallet={() => this._connectWallet()} 
+              networkError={this.state.networkError}
+              dismiss={() => this._dismissNetworkError()}
+            />
+          );
+        } */
 
     // If the token data or the user's balance hasn't loaded yet, we show
     // a loading component.
-    if (!this.state.tokenData || !this.state.balance) {
-      return <Loading />;
-    }
+    /*     if (!this.state.tokenData || !this.state.balance) {
+          return <Loading />;
+        } */
 
     // If everything is loaded, we render the application.
-    return (
-      <div className="container p-4">
-        <div className="row">
-          <div className="col-12">
-            <h1>
-              {this.state.tokenData.name} ({this.state.tokenData.symbol})
-            </h1>
-            <p>
-              Welcome <b>{this.state.selectedAddress}</b>, you have{" "}
-              <b>
-                {this.state.balance.toString()} {this.state.tokenData.symbol}
-              </b>
-              .
-            </p>
-          </div>
-        </div>
 
-        <hr />
-
-        <div className="row">
-          <div className="col-12">
-            {/* 
-              Sending a transaction isn't an immidiate action. You have to wait
-              for it to be mined.
-              If we are waiting for one, we show a message here.
-            */}
-            {this.state.txBeingSent && (
-              <WaitingForTransactionMessage txHash={this.state.txBeingSent} />
-            )}
-
-            {/* 
-              Sending a transaction can fail in multiple ways. 
-              If that happened, we show a message here.
-            */}
-            {this.state.transactionError && (
-              <TransactionErrorMessage
-                message={this._getRpcErrorMessage(this.state.transactionError)}
-                dismiss={() => this._dismissTransactionError()}
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="col-12">
-            {/*
-              If the user has no tokens, we don't show the Tranfer form
-            */}
-            {this.state.balance.eq(0) && (
-              <NoTokensMessage selectedAddress={this.state.selectedAddress} />
-            )}
-
-            {/*
-              This component displays a form that the user can use to send a 
-              transaction and transfer some tokens.
-              The component doesn't have logic, it just calls the transferTokens
-              callback.
-            */}
-            {this.state.balance.gt(0) && (
-              <Transfer
-                transferTokens={(to, amount) =>
-                  this._transferTokens(to, amount)
-                }
-                tokenSymbol={this.state.tokenData.symbol}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-    );
   }
 
   componentWillUnmount() {
@@ -194,15 +148,33 @@ export class Dapp extends React.Component {
       if (newAddress === undefined) {
         return this._resetState();
       }
-      
+
       this._initialize(newAddress);
     });
-    
+
     // We reset the dapp state if the network is changed
     window.ethereum.on("networkChanged", ([networkId]) => {
       this._stopPollingData();
       this._resetState();
     });
+  }
+
+  _initializeTGA(userAddress) {
+    // This method initializes the dapp
+
+    // We first store the user's address in the component's state
+    /*     this.setState({
+          selectedAddress: userAddress,
+        }); */
+
+    // Then, we initialize ethers, fetch the token's data, and start polling
+    // for the user's balance.
+
+    // Fetching the token data and the user's balance are specific to this
+    // sample project, but you can reuse the same initialization pattern.
+    this._intializeEthersTGA();
+    this._getImageUrl();
+    //this._startPollingData();
   }
 
   _initialize(userAddress) {
@@ -222,7 +194,18 @@ export class Dapp extends React.Component {
     this._getTokenData();
     this._startPollingData();
   }
+  async _intializeEthersTGA() {
+    // We first initialize ethers by creating a provider using window.ethereum
+    this._provider = new ethers.providers.Web3Provider(window.ethereum);
 
+    // When, we initialize the contract using that provider and the token's
+    // artifact. You can do this same thing with your contracts.
+    this._renter = new ethers.Contract(
+      contractAddress.Renter,
+      RenterArtifact.abi,
+      this._provider.getSigner(0)
+    );
+  }
   async _intializeEthers() {
     // We first initialize ethers by creating a provider using window.ethereum
     this._provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -268,6 +251,12 @@ export class Dapp extends React.Component {
     const balance = await this._token.balanceOf(this.state.selectedAddress);
     this.setState({ balance });
   }
+
+  async _getImageUrl() {
+    const imageUrl = await this._renter.getImageUrl();
+    this.setState({ renterData: { imageUrl } });
+  }
+
 
   // This method sends an ethereum transaction to transfer tokens.
   // While this action is specific to this application, it illustrates how to
@@ -360,7 +349,7 @@ export class Dapp extends React.Component {
       return true;
     }
 
-    this.setState({ 
+    this.setState({
       networkError: 'Please connect Metamask to Localhost:8545'
     });
 
